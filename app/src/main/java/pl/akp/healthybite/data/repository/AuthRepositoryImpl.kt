@@ -5,6 +5,7 @@ import pl.akp.healthybite.data.db.dao.UserDao
 import pl.akp.healthybite.data.db.entity.UserEntity
 import pl.akp.healthybite.domain.model.User
 import pl.akp.healthybite.domain.repository.AuthRepository
+import pl.akp.healthybite.domain.repository.EmailAlreadyExistsException
 
 class AuthRepositoryImpl(
     private val userDao: UserDao,
@@ -23,8 +24,16 @@ class AuthRepositoryImpl(
         return Result.success(entity.toDomain())
     }
 
-    override suspend fun register(email: String, password: String) {
-        // Not implemented yet
+    override suspend fun register(email: String, password: String): Result<User> {
+        val existing = userDao.getByEmail(email)
+        if (existing != null) {
+            return Result.failure(EmailAlreadyExistsException())
+        }
+
+        val entity = UserEntity(email = email, password = password, displayName = null)
+        val id = userDao.insert(entity)
+        sessionDataStore.setLoggedIn(id)
+        return Result.success(User(id = id, email = email, displayName = null))
     }
 
     override suspend fun logout() {

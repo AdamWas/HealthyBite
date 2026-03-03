@@ -10,6 +10,7 @@ import pl.akp.healthybite.HealthyBiteApplication
 import pl.akp.healthybite.ui.auth.AuthViewModel
 import pl.akp.healthybite.ui.auth.LoginScreen
 import pl.akp.healthybite.ui.auth.RegisterScreen
+import pl.akp.healthybite.ui.auth.RegisterViewModel
 import pl.akp.healthybite.ui.home.HomeScreen
 import pl.akp.healthybite.ui.log.LogScreen
 import pl.akp.healthybite.ui.meals.AddMealScreen
@@ -60,11 +61,30 @@ fun NavGraph(
                     navController.navigate(Route.Home.route) {
                         popUpTo(Route.Login.route) { inclusive = true }
                     }
+                },
+                onNavigateToRegister = {
+                    navController.navigate(Route.Register.route)
                 }
             )
         }
 
-        composable(Route.Register.route) { RegisterScreen() }
+        composable(Route.Register.route) {
+            val vm: RegisterViewModel = viewModel(
+                factory = RegisterViewModel.Factory(app.authRepository)
+            )
+            RegisterScreen(
+                viewModel = vm,
+                onRegisterSuccess = {
+                    navController.navigate(Route.Home.route) {
+                        popUpTo(Route.Login.route) { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(Route.Home.route) { HomeScreen() }
         composable(Route.Log.route) { LogScreen() }
         composable(Route.AddMeal.route) { AddMealScreen() }
