@@ -37,7 +37,7 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun logout() {
-        sessionDataStore.clear()
+        sessionDataStore.clearSession()
     }
 }
 

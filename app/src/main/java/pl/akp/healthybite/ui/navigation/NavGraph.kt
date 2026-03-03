@@ -16,6 +16,7 @@ import pl.akp.healthybite.ui.log.LogScreen
 import pl.akp.healthybite.ui.meals.AddMealScreen
 import pl.akp.healthybite.ui.plans.PlansScreen
 import pl.akp.healthybite.ui.profile.ProfileScreen
+import pl.akp.healthybite.ui.profile.ProfileViewModel
 import pl.akp.healthybite.ui.shopping.ShoppingScreen
 import pl.akp.healthybite.ui.splash.SplashScreen
 import pl.akp.healthybite.ui.splash.SplashViewModel
@@ -91,6 +92,18 @@ fun NavGraph(
         composable(Route.Shopping.route) { ShoppingScreen() }
         composable(Route.Water.route) { WaterScreen() }
         composable(Route.Plans.route) { PlansScreen() }
-        composable(Route.Profile.route) { ProfileScreen() }
+        composable(Route.Profile.route) {
+            val vm: ProfileViewModel = viewModel(
+                factory = ProfileViewModel.Factory(app.authRepository)
+            )
+            ProfileScreen(
+                viewModel = vm,
+                onLogoutSuccess = {
+                    navController.navigate(Route.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
     }
 }

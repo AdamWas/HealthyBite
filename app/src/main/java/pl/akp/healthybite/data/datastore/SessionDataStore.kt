@@ -29,6 +29,13 @@ class SessionDataStore(
         }
     }
 
+    suspend fun clearSession() {
+        dataStore.edit { prefs ->
+            prefs[SessionKeys.IS_LOGGED_IN] = false
+            prefs.remove(SessionKeys.CURRENT_USER_ID)
+        }
+    }
+
     suspend fun clear() {
         dataStore.edit { it.clear() }
     }
