@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 import pl.akp.healthybite.data.db.entity.PlanTemplateEntity
+import pl.akp.healthybite.data.db.entity.PlanTemplateItemEntity
 
 @Dao
 interface PlanDao {
@@ -14,6 +15,8 @@ interface PlanDao {
     fun observePlans(): Flow<List<PlanTemplateEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(plan: PlanTemplateEntity)
-}
+    suspend fun insert(plan: PlanTemplateEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertItem(item: PlanTemplateItemEntity)
+}

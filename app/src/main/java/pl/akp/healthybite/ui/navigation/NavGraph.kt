@@ -7,20 +7,16 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import pl.akp.healthybite.HealthyBiteApplication
+import pl.akp.healthybite.app.MainScaffold
 import pl.akp.healthybite.ui.auth.AuthViewModel
 import pl.akp.healthybite.ui.auth.LoginScreen
 import pl.akp.healthybite.ui.auth.RegisterScreen
 import pl.akp.healthybite.ui.auth.RegisterViewModel
-import pl.akp.healthybite.ui.home.HomeScreen
-import pl.akp.healthybite.ui.log.LogScreen
 import pl.akp.healthybite.ui.meals.AddMealScreen
-import pl.akp.healthybite.ui.plans.PlansScreen
 import pl.akp.healthybite.ui.profile.ProfileScreen
 import pl.akp.healthybite.ui.profile.ProfileViewModel
-import pl.akp.healthybite.ui.shopping.ShoppingScreen
 import pl.akp.healthybite.ui.splash.SplashScreen
 import pl.akp.healthybite.ui.splash.SplashViewModel
-import pl.akp.healthybite.ui.water.WaterScreen
 
 @Composable
 fun NavGraph(
@@ -45,7 +41,7 @@ fun NavGraph(
                     }
                 },
                 onNavigateToHome = {
-                    navController.navigate(Route.Home.route) {
+                    navController.navigate(Route.Main.route) {
                         popUpTo(Route.Splash.route) { inclusive = true }
                     }
                 }
@@ -59,7 +55,7 @@ fun NavGraph(
             LoginScreen(
                 viewModel = vm,
                 onLoginSuccess = {
-                    navController.navigate(Route.Home.route) {
+                    navController.navigate(Route.Main.route) {
                         popUpTo(Route.Login.route) { inclusive = true }
                     }
                 },
@@ -76,7 +72,7 @@ fun NavGraph(
             RegisterScreen(
                 viewModel = vm,
                 onRegisterSuccess = {
-                    navController.navigate(Route.Home.route) {
+                    navController.navigate(Route.Main.route) {
                         popUpTo(Route.Login.route) { inclusive = true }
                     }
                 },
@@ -86,12 +82,17 @@ fun NavGraph(
             )
         }
 
-        composable(Route.Home.route) { HomeScreen() }
-        composable(Route.Log.route) { LogScreen() }
-        composable(Route.AddMeal.route) { AddMealScreen() }
-        composable(Route.Shopping.route) { ShoppingScreen() }
-        composable(Route.Water.route) { WaterScreen() }
-        composable(Route.Plans.route) { PlansScreen() }
+        composable(Route.Main.route) {
+            MainScaffold(
+                onNavigateToProfile = {
+                    navController.navigate(Route.Profile.route)
+                },
+                onNavigateToAddMeal = {
+                    navController.navigate(Route.AddMeal.route)
+                }
+            )
+        }
+
         composable(Route.Profile.route) {
             val vm: ProfileViewModel = viewModel(
                 factory = ProfileViewModel.Factory(app.authRepository)
@@ -105,5 +106,7 @@ fun NavGraph(
                 }
             )
         }
+
+        composable(Route.AddMeal.route) { AddMealScreen() }
     }
 }

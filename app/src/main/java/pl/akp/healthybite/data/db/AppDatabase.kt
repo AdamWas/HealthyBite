@@ -28,7 +28,7 @@ import pl.akp.healthybite.data.db.entity.WaterEntryEntity
         PlanTemplateItemEntity::class,
         WaterEntryEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(EnumConverters::class)

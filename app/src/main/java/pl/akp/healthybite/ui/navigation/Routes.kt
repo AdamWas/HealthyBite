@@ -4,6 +4,7 @@ sealed class Route(val route: String) {
     data object Splash : Route("splash")
     data object Login : Route("login")
     data object Register : Route("register")
+    data object Main : Route("main")
     data object Home : Route("home")
     data object Log : Route("log")
     data object AddMeal : Route("add_meal")
@@ -12,4 +13,3 @@ sealed class Route(val route: String) {
     data object Plans : Route("plans")
     data object Profile : Route("profile")
 }
-

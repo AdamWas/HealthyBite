@@ -8,6 +8,9 @@ import pl.akp.healthybite.domain.model.MealType
 data class MealTemplateEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val type: MealType
+    val type: MealType,
+    val kcal: Int = 0,
+    val proteinG: Int = 0,
+    val fatG: Int = 0,
+    val carbsG: Int = 0
 )
-

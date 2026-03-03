@@ -12,8 +12,10 @@ import pl.akp.healthybite.domain.repository.AuthRepository
 class HealthyBiteApplication : Application() {
 
     val database: AppDatabase by lazy {
+        @Suppress("DEPRECATION")
         Room.databaseBuilder(this, AppDatabase::class.java, "healthybite.db")
             .addCallback(PrepopulateCallback())
+            .fallbackToDestructiveMigration()
             .build()
     }
 
