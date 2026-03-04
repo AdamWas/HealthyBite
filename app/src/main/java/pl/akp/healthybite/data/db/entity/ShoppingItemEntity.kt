@@ -8,5 +8,6 @@ data class ShoppingItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val userId: Long,
     val name: String,
-    val isChecked: Boolean
+    val quantity: String = "",
+    val isChecked: Boolean = false
 )

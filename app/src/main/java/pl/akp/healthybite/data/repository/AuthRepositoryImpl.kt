@@ -39,10 +39,19 @@ class AuthRepositoryImpl(
     override suspend fun logout() {
         sessionDataStore.clearSession()
     }
+
+    override suspend fun getUser(userId: Long): User? {
+        return userDao.getById(userId)?.toDomain()
+    }
+
+    override suspend fun updateCaloriesGoal(userId: Long, goal: Int) {
+        userDao.updateCaloriesGoal(userId, goal)
+    }
 }
 
 private fun UserEntity.toDomain() = User(
     id = id,
     email = email,
-    displayName = displayName
+    displayName = displayName,
+    dailyCaloriesGoal = dailyCaloriesGoal
 )

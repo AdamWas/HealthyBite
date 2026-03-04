@@ -13,6 +13,7 @@ import pl.akp.healthybite.ui.auth.LoginScreen
 import pl.akp.healthybite.ui.auth.RegisterScreen
 import pl.akp.healthybite.ui.auth.RegisterViewModel
 import pl.akp.healthybite.ui.meals.AddMealScreen
+import pl.akp.healthybite.ui.meals.AddMealViewModel
 import pl.akp.healthybite.ui.profile.ProfileScreen
 import pl.akp.healthybite.ui.profile.ProfileViewModel
 import pl.akp.healthybite.ui.splash.SplashScreen
@@ -31,7 +32,11 @@ fun NavGraph(
     ) {
         composable(Route.Splash.route) {
             val vm: SplashViewModel = viewModel(
-                factory = SplashViewModel.Factory(app.sessionStore, app.database.userDao())
+                factory = SplashViewModel.Factory(
+                    app.sessionStore,
+                    app.database.userDao(),
+                    app.databaseSeeder
+                )
             )
             SplashScreen(
                 viewModel = vm,
@@ -95,7 +100,10 @@ fun NavGraph(
 
         composable(Route.Profile.route) {
             val vm: ProfileViewModel = viewModel(
-                factory = ProfileViewModel.Factory(app.authRepository)
+                factory = ProfileViewModel.Factory(
+                    app.sessionStore,
+                    app.authRepository
+                )
             )
             ProfileScreen(
                 viewModel = vm,
@@ -107,6 +115,18 @@ fun NavGraph(
             )
         }
 
-        composable(Route.AddMeal.route) { AddMealScreen() }
+        composable(Route.AddMeal.route) {
+            val vm: AddMealViewModel = viewModel(
+                factory = AddMealViewModel.Factory(
+                    app.sessionStore,
+                    app.database.mealTemplateDao(),
+                    app.database.mealEntryDao()
+                )
+            )
+            AddMealScreen(
+                viewModel = vm,
+                onBack = { navController.popBackStack() }
+            )
+        }
     }
 }

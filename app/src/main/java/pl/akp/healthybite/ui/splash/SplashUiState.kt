@@ -7,5 +7,7 @@ sealed interface SplashDestination {
 }
 
 data class SplashUiState(
-    val destination: SplashDestination = SplashDestination.Loading
+    val destination: SplashDestination = SplashDestination.Loading,
+    val isLoading: Boolean = true,
+    val error: String? = null
 )

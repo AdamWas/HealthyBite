@@ -17,4 +17,10 @@ interface UserDao {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(user: UserEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertIgnore(user: UserEntity): Long
+
+    @Query("UPDATE users SET dailyCaloriesGoal = :goal WHERE id = :userId")
+    suspend fun updateCaloriesGoal(userId: Long, goal: Int)
 }

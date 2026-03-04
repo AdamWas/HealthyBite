@@ -10,45 +10,64 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pl.akp.healthybite.data.datastore.SessionDataStore
+import pl.akp.healthybite.data.db.DatabaseSeeder
 import pl.akp.healthybite.data.db.dao.UserDao
 
 class SplashViewModel(
     private val sessionDataStore: SessionDataStore,
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val databaseSeeder: DatabaseSeeder
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SplashUiState())
     val uiState: StateFlow<SplashUiState> = _uiState.asStateFlow()
 
     init {
-        checkSession()
+        startUp()
     }
 
-    private fun checkSession() {
+    fun onRetry() {
+        startUp()
+    }
+
+    private fun startUp() {
         viewModelScope.launch {
-            val isLoggedIn = sessionDataStore.isLoggedIn.first()
-            if (isLoggedIn) {
-                val userId = sessionDataStore.currentUserId.first()
-                val userExists = userId != null && userDao.getById(userId) != null
-                if (userExists) {
-                    _uiState.update { it.copy(destination = SplashDestination.Home) }
-                } else {
-                    sessionDataStore.clear()
-                    _uiState.update { it.copy(destination = SplashDestination.Login) }
+            _uiState.update { it.copy(isLoading = true, error = null, destination = SplashDestination.Loading) }
+            try {
+                databaseSeeder.seedIfNeeded()
+                checkSession()
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(isLoading = false, error = e.message ?: "Initialization failed")
                 }
-            } else {
-                _uiState.update { it.copy(destination = SplashDestination.Login) }
             }
+        }
+    }
+
+    private suspend fun checkSession() {
+        val isLoggedIn = sessionDataStore.isLoggedIn.first()
+        if (isLoggedIn) {
+            val userId = sessionDataStore.currentUserId.first()
+            val userExists = userId != null && userDao.getById(userId) != null
+            if (userExists) {
+                _uiState.update { it.copy(isLoading = false, destination = SplashDestination.Home) }
+            } else {
+                sessionDataStore.clear()
+                _uiState.update { it.copy(isLoading = false, destination = SplashDestination.Login) }
+            }
+        } else {
+            _uiState.update { it.copy(isLoading = false, destination = SplashDestination.Login) }
         }
     }
 
     class Factory(
         private val sessionDataStore: SessionDataStore,
-        private val userDao: UserDao
+        private val userDao: UserDao,
+        private val databaseSeeder: DatabaseSeeder
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return SplashViewModel(sessionDataStore, userDao) as T
+            return SplashViewModel(sessionDataStore, userDao, databaseSeeder) as T
         }
     }
 }

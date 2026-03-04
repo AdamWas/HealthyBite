@@ -5,6 +5,7 @@ import androidx.room.Room
 import pl.akp.healthybite.data.datastore.SessionDataStore
 import pl.akp.healthybite.data.datastore.sessionDataStore
 import pl.akp.healthybite.data.db.AppDatabase
+import pl.akp.healthybite.data.db.DatabaseSeeder
 import pl.akp.healthybite.data.db.PrepopulateCallback
 import pl.akp.healthybite.data.repository.AuthRepositoryImpl
 import pl.akp.healthybite.domain.repository.AuthRepository
@@ -25,5 +26,9 @@ class HealthyBiteApplication : Application() {
 
     val authRepository: AuthRepository by lazy {
         AuthRepositoryImpl(database.userDao(), sessionStore)
+    }
+
+    val databaseSeeder: DatabaseSeeder by lazy {
+        DatabaseSeeder(database)
     }
 }

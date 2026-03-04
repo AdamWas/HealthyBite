@@ -13,7 +13,15 @@ interface MealEntryDao {
     @Query("SELECT * FROM meal_entries")
     fun observeEntries(): Flow<List<MealEntryEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(entry: MealEntryEntity)
-}
+    @Query("SELECT * FROM meal_entries WHERE userId = :userId AND date = :date")
+    fun observeEntriesForUserAndDate(userId: Long, date: String): Flow<List<MealEntryEntity>>
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entry: MealEntryEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(entries: List<MealEntryEntity>)
+
+    @Query("DELETE FROM meal_entries WHERE id = :id")
+    suspend fun deleteById(id: Long)
+}

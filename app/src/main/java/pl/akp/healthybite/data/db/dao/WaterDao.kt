@@ -10,10 +10,12 @@ import pl.akp.healthybite.data.db.entity.WaterEntryEntity
 @Dao
 interface WaterDao {
 
-    @Query("SELECT * FROM water_entries")
-    fun observeEntries(): Flow<List<WaterEntryEntity>>
+    @Query("SELECT SUM(amountMl) FROM water_entries WHERE userId = :userId AND date = :date")
+    fun observeTotalForDate(userId: Long, date: String): Flow<Int?>
+
+    @Query("SELECT * FROM water_entries WHERE userId = :userId AND date = :date ORDER BY timestamp DESC")
+    fun observeEntriesForDate(userId: Long, date: String): Flow<List<WaterEntryEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(entry: WaterEntryEntity)
+    suspend fun insert(entry: WaterEntryEntity): Long
 }
-

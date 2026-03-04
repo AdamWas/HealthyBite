@@ -23,17 +23,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import pl.akp.healthybite.HealthyBiteApplication
 import pl.akp.healthybite.ui.home.HomeScreen
+import pl.akp.healthybite.ui.home.HomeViewModel
 import pl.akp.healthybite.ui.log.LogScreen
+import pl.akp.healthybite.ui.log.LogViewModel
 import pl.akp.healthybite.ui.navigation.Route
 import pl.akp.healthybite.ui.plans.PlansScreen
+import pl.akp.healthybite.ui.plans.PlansViewModel
 import pl.akp.healthybite.ui.shopping.ShoppingScreen
+import pl.akp.healthybite.ui.shopping.ShoppingViewModel
 import pl.akp.healthybite.ui.water.WaterScreen
+import pl.akp.healthybite.ui.water.WaterViewModel
 
 private data class BottomNavItem(
     val route: String,
@@ -55,6 +63,7 @@ fun MainScaffold(
     onNavigateToProfile: () -> Unit,
     onNavigateToAddMeal: () -> Unit
 ) {
+    val app = LocalContext.current.applicationContext as HealthyBiteApplication
     val innerNav = rememberNavController()
     val backStackEntry by innerNav.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -115,11 +124,56 @@ fun MainScaffold(
             startDestination = Route.Home.route,
             modifier = Modifier.padding(padding)
         ) {
-            composable(Route.Home.route) { HomeScreen() }
-            composable(Route.Log.route) { LogScreen() }
-            composable(Route.Shopping.route) { ShoppingScreen() }
-            composable(Route.Water.route) { WaterScreen() }
-            composable(Route.Plans.route) { PlansScreen() }
+            composable(Route.Home.route) {
+                val homeVm: HomeViewModel = viewModel(
+                    factory = HomeViewModel.Factory(
+                        app.sessionStore,
+                        app.database.mealEntryDao()
+                    )
+                )
+                HomeScreen(viewModel = homeVm)
+            }
+            composable(Route.Log.route) {
+                val logVm: LogViewModel = viewModel(
+                    factory = LogViewModel.Factory(
+                        app.sessionStore,
+                        app.database.mealEntryDao()
+                    )
+                )
+                LogScreen(
+                    viewModel = logVm,
+                    onNavigateToAddMeal = onNavigateToAddMeal
+                )
+            }
+            composable(Route.Shopping.route) {
+                val shoppingVm: ShoppingViewModel = viewModel(
+                    factory = ShoppingViewModel.Factory(
+                        app.sessionStore,
+                        app.database.shoppingDao()
+                    )
+                )
+                ShoppingScreen(viewModel = shoppingVm)
+            }
+            composable(Route.Water.route) {
+                val waterVm: WaterViewModel = viewModel(
+                    factory = WaterViewModel.Factory(
+                        app.sessionStore,
+                        app.database.waterDao()
+                    )
+                )
+                WaterScreen(viewModel = waterVm)
+            }
+            composable(Route.Plans.route) {
+                val plansVm: PlansViewModel = viewModel(
+                    factory = PlansViewModel.Factory(
+                        app.sessionStore,
+                        app.database.planDao(),
+                        app.database.mealTemplateDao(),
+                        app.database.mealEntryDao()
+                    )
+                )
+                PlansScreen(viewModel = plansVm)
+            }
         }
     }
 }
