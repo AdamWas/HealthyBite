@@ -27,14 +27,8 @@ interface PlanDao {
     @Query("SELECT * FROM plan_templates")
     fun observePlansWithItems(): Flow<List<PlanWithItems>>
 
-    @Query("SELECT * FROM plan_templates")
-    fun observePlans(): Flow<List<PlanTemplateEntity>>
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(plan: PlanTemplateEntity): Long
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertItem(item: PlanTemplateItemEntity)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertItems(items: List<PlanTemplateItemEntity>)

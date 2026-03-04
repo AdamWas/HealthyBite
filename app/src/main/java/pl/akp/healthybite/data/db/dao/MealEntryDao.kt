@@ -10,9 +10,6 @@ import pl.akp.healthybite.data.db.entity.MealEntryEntity
 @Dao
 interface MealEntryDao {
 
-    @Query("SELECT * FROM meal_entries")
-    fun observeEntries(): Flow<List<MealEntryEntity>>
-
     @Query("SELECT * FROM meal_entries WHERE userId = :userId AND date = :date")
     fun observeEntriesForUserAndDate(userId: Long, date: String): Flow<List<MealEntryEntity>>
 

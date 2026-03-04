@@ -11,9 +11,6 @@ import pl.akp.healthybite.domain.model.MealType
 @Dao
 interface MealTemplateDao {
 
-    @Query("SELECT * FROM meal_templates")
-    fun observeTemplates(): Flow<List<MealTemplateEntity>>
-
     @Query("SELECT * FROM meal_templates WHERE type = :type")
     fun observeByType(type: MealType): Flow<List<MealTemplateEntity>>
 
