@@ -175,13 +175,17 @@ fun MainScaffold(
         // A prominent "+" button that lets the user quickly add a new meal. Tapping it calls
         // onNavigateToAddMeal, which navigates in the ROOT NavHost to the Add Meal screen
         // (outside the scaffold), so the bottom bar disappears while adding a meal.
+        // The FAB is only shown on the Home tab; on all other tabs it is hidden.
+        // This is driven by `currentRoute`, which recomposes whenever the user switches tabs.
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToAddMeal,
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = "Add meal")
+            if (currentRoute == Route.Home.route) {
+                FloatingActionButton(
+                    onClick = onNavigateToAddMeal,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add meal")
+                }
             }
         }
     ) { padding ->
