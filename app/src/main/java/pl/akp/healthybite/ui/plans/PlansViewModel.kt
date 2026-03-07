@@ -18,6 +18,14 @@ import pl.akp.healthybite.data.db.dao.PlanWithItems
 import pl.akp.healthybite.data.db.entity.MealEntryEntity
 import java.time.LocalDate
 
+/**
+ * ViewModel for the Plans tab.
+ *
+ * Observes all meal plans (with items) from [PlanDao] and resolves each
+ * plan item's template to compute total kcal. "Apply to today" resolves
+ * each plan item → meal template → [MealEntryEntity] and bulk-inserts
+ * them into today's log.
+ */
 class PlansViewModel(
     private val sessionDataStore: SessionDataStore,
     private val planDao: PlanDao,
@@ -28,12 +36,22 @@ class PlansViewModel(
     private val _uiState = MutableStateFlow(PlansUiState())
     val uiState: StateFlow<PlansUiState> = _uiState.asStateFlow()
 
+    /**
+     * Caches the raw Room [PlanWithItems] data so [onApplyClicked] can look up
+     * the full plan + items without re-querying the database.
+     */
     private var plansWithItems: List<PlanWithItems> = emptyList()
 
     init {
         observePlans()
     }
 
+    /**
+     * Watches [PlanDao.observePlansWithItems] and maps each [PlanWithItems]
+     * to a [PlanCardModel] (resolving template kcal for display).
+     * The result is stored both in [plansWithItems] (raw cache) and in
+     * [_uiState.plans] (UI-ready models).
+     */
     private fun observePlans() {
         viewModelScope.launch {
             planDao.observePlansWithItems().collectLatest { list ->
@@ -48,6 +66,20 @@ class PlansViewModel(
         }
     }
 
+    /**
+     * Applies the selected plan to today's meal log. Steps:
+     *
+     * 1. Retrieves the current userId; bails with an error if not logged in.
+     * 2. Sets [PlansUiState.applyingPlanId] to disable all apply buttons and show a spinner.
+     * 3. Finds the cached [PlanWithItems] matching [planId].
+     * 4. For each plan item, resolves the meal template by name via [MealTemplateDao.getByName].
+     *    Items whose template can't be found are silently skipped (mapNotNull).
+     * 5. Creates a [MealEntryEntity] per resolved template, stamped with today's date.
+     * 6. Bulk-inserts all entries via [MealEntryDao.insertAll].
+     * 7. On success, shows a snackbar with the count of inserted meals.
+     *    On failure, shows an error snackbar.
+     * 8. Clears [applyingPlanId] in either case to re-enable the buttons.
+     */
     fun onApplyClicked(planId: Long) {
         viewModelScope.launch {
             val userId = sessionDataStore.currentUserId.first()
@@ -56,6 +88,7 @@ class PlansViewModel(
                 return@launch
             }
 
+            // Mark this plan as "applying" to show spinner and lock all apply buttons
             _uiState.update { it.copy(applyingPlanId = planId, errorMessage = null, successMessage = null) }
 
             try {
@@ -67,6 +100,8 @@ class PlansViewModel(
 
                 val today = LocalDate.now().toString()
                 val now = System.currentTimeMillis()
+
+                // Resolve each plan item → meal template → MealEntryEntity
                 val entries = plan.items.mapNotNull { item ->
                     val template = mealTemplateDao.getByName(item.mealTemplateName) ?: return@mapNotNull null
                     MealEntryEntity(
@@ -88,6 +123,7 @@ class PlansViewModel(
                     return@launch
                 }
 
+                // Bulk-insert all resolved entries into today's log
                 mealEntryDao.insertAll(entries)
                 _uiState.update {
                     it.copy(
@@ -101,14 +137,23 @@ class PlansViewModel(
         }
     }
 
+    /** Called by the UI after the success snackbar has been shown, to prevent re-showing. */
     fun clearSuccessMessage() {
         _uiState.update { it.copy(successMessage = null) }
     }
 
+    /** Called by the UI after the error snackbar has been shown, to prevent re-showing. */
     fun clearErrorMessage() {
         _uiState.update { it.copy(errorMessage = null) }
     }
 
+    /**
+     * Converts a Room [PlanWithItems] into a display-ready [PlanCardModel].
+     *
+     * For each plan item, looks up the corresponding [MealTemplateEntity] by name
+     * and accumulates its kcal into [totalKcal]. If a template isn't found the
+     * item still appears in the card but its calories aren't counted.
+     */
     private suspend fun PlanWithItems.toCardModel(): PlanCardModel {
         var totalKcal = 0
         val uiItems = items.map { item ->
@@ -124,6 +169,11 @@ class PlansViewModel(
         )
     }
 
+    /**
+     * Manual dependency injection factory.
+     * Required because [PlansViewModel] takes multiple DAOs + a DataStore that
+     * Android's default ViewModelProvider cannot supply on its own.
+     */
     class Factory(
         private val sessionDataStore: SessionDataStore,
         private val planDao: PlanDao,

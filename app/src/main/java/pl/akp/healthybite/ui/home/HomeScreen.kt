@@ -33,8 +33,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+/**
+ * Home tab – displays today's nutrition dashboard.
+ *
+ * Shows a calories summary card, macronutrient breakdown, and meal count.
+ * When no meals have been logged, an empty-state prompt is shown instead.
+ */
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
+    // Converts the ViewModel's StateFlow into Compose State so that
+    // this composable automatically recomposes when the data changes.
     val state by viewModel.uiState.collectAsState()
 
     Column(
@@ -42,11 +50,14 @@ fun HomeScreen(viewModel: HomeViewModel) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
+        // Indeterminate progress bar shown at the very top while entries
+        // are being loaded from the database on first launch.
         if (state.isLoading) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
         Column(modifier = Modifier.padding(16.dp)) {
+            // "Today" header with the current date displayed underneath.
             Text(
                 text = "Today",
                 style = MaterialTheme.typography.headlineMedium,
@@ -63,8 +74,14 @@ fun HomeScreen(viewModel: HomeViewModel) {
             Spacer(modifier = Modifier.height(20.dp))
 
             if (!state.isLoading && state.entriesCount == 0) {
+                // Empty state — no meals logged yet. Shows a prompt that
+                // tells the user to tap the FAB (+) to add their first meal.
                 EmptyMealsCard()
             } else if (!state.isLoading) {
+                // Non-empty state — show the three dashboard cards in order:
+                // 1) CaloriesSummaryCard  – total kcal with a fire icon
+                // 2) MacrosSummaryCard    – protein / fat / carbs breakdown
+                // 3) EntriesCountCard     – "X meals logged"
                 CaloriesSummaryCard(state)
                 Spacer(modifier = Modifier.height(12.dp))
                 MacrosSummaryCard(state)
@@ -72,6 +89,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 EntriesCountCard(state.entriesCount)
             }
 
+            // Render an error message (e.g. DB read failure) in red below
+            // the cards, if one exists.
             state.errorMessage?.let { msg ->
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
@@ -84,6 +103,13 @@ fun HomeScreen(viewModel: HomeViewModel) {
     }
 }
 
+/**
+ * Prominent card showing total kilocalories consumed today.
+ *
+ * Uses the primary container color to stand out as the most important metric.
+ * A fire icon (LocalFireDepartment) sits on the left; the kcal number and
+ * "calories today" label sit on the right.
+ */
 @Composable
 private fun CaloriesSummaryCard(state: HomeUiState) {
     Card(
@@ -122,6 +148,12 @@ private fun CaloriesSummaryCard(state: HomeUiState) {
     }
 }
 
+/**
+ * Card showing the macronutrient breakdown: Protein, Fat, and Carbs.
+ *
+ * Each macro is rendered as a MacroItem column (value in grams + label),
+ * evenly spaced in a Row.
+ */
 @Composable
 private fun MacrosSummaryCard(state: HomeUiState) {
     Card(
@@ -149,6 +181,12 @@ private fun MacrosSummaryCard(state: HomeUiState) {
     }
 }
 
+/**
+ * A single macro column inside MacrosSummaryCard.
+ *
+ * Displays the gram value (e.g. "45g") in a bold primary color on top
+ * and the label (e.g. "Protein") in a muted color underneath.
+ */
 @Composable
 private fun MacroItem(label: String, valueG: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -166,6 +204,12 @@ private fun MacroItem(label: String, valueG: Int) {
     }
 }
 
+/**
+ * Card showing the number of meals logged today (e.g. "3 meals logged").
+ *
+ * Includes a restaurant icon and handles singular/plural grammar
+ * ("1 meal" vs "2 meals").
+ */
 @Composable
 private fun EntriesCountCard(count: Int) {
     Card(
@@ -195,6 +239,13 @@ private fun EntriesCountCard(count: Int) {
     }
 }
 
+/**
+ * Empty-state card shown when no meals have been logged for today.
+ *
+ * Displays a food icon, a "No meals logged" message, and a hint telling the
+ * user to tap the floating action button (+) in the MainScaffold to add
+ * their first meal.
+ */
 @Composable
 private fun EmptyMealsCard() {
     Card(

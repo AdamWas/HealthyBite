@@ -42,10 +42,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import pl.akp.healthybite.data.db.entity.ShoppingItemEntity
 
+/**
+ * Shopping tab – a checklist-style grocery list.
+ *
+ * Features an inline add-item form at the top, checkboxes to mark items
+ * as purchased (which dims and strikes through the text), and swipe-to-delete
+ * with a confirmation dialog.
+ */
 @Composable
 fun ShoppingScreen(viewModel: ShoppingViewModel) {
     val state by viewModel.uiState.collectAsState()
 
+    /*
+     * Delete-confirmation dialog: shown whenever pendingDeleteId is non-null.
+     * Looks up the item name for display; falls back to "this item" if the
+     * item was removed from the list before the dialog renders.
+     */
     if (state.pendingDeleteId != null) {
         val item = state.items.firstOrNull { it.id == state.pendingDeleteId }
         DeleteItemDialog(
@@ -56,10 +68,20 @@ fun ShoppingScreen(viewModel: ShoppingViewModel) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
+        // Thin indeterminate progress bar at the very top while items are loading
         if (state.isLoading) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
+        /*
+         * LazyColumn layout order:
+         *   1. "Shopping list" header
+         *   2. Inline add-item form (always visible)
+         *   3. Shopping item rows (if any)
+         *   4. Empty-state placeholder (if no items after loading)
+         *   5. Error text (if any operation failed)
+         *   6. Bottom spacer for navigation-bar clearance
+         */
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -98,6 +120,7 @@ fun ShoppingScreen(viewModel: ShoppingViewModel) {
                 }
             }
 
+            // Shown only after loading completes with zero items
             if (!state.isLoading && state.items.isEmpty()) {
                 item(key = "empty") {
                     EmptyShoppingContent()
@@ -122,6 +145,13 @@ fun ShoppingScreen(viewModel: ShoppingViewModel) {
     }
 }
 
+/**
+ * Inline form card for adding a new shopping item.
+ *
+ * Contains a name field (required) and a quantity field (optional) side by side,
+ * plus a full-width "Add" button. The button is disabled until [canAdd] is true
+ * (name non-blank and no validation error).
+ */
 @Composable
 private fun AddItemCard(
     nameInput: String,
@@ -143,6 +173,7 @@ private fun AddItemCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Name field takes remaining width; shows red border + error text when invalid
                 OutlinedTextField(
                     value = nameInput,
                     onValueChange = onNameChanged,
@@ -152,6 +183,7 @@ private fun AddItemCard(
                     singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
+                // Fixed-width quantity field (e.g. "2 kg", "1 pack")
                 OutlinedTextField(
                     value = quantityInput,
                     onValueChange = onQuantityChanged,
@@ -161,6 +193,7 @@ private fun AddItemCard(
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
+            // Tapping "Add" calls ShoppingViewModel.onAddClicked → inserts into DB
             FilledTonalButton(
                 onClick = onAddClicked,
                 enabled = canAdd,
@@ -174,6 +207,15 @@ private fun AddItemCard(
     }
 }
 
+/**
+ * A single shopping-list row: checkbox on the left, item text in the middle,
+ * delete icon on the right.
+ *
+ * When [item.isChecked] is true the card dims, the name gets a strikethrough,
+ * and the font weight drops — giving clear visual feedback that the item is "done".
+ * Tapping the checkbox calls [onToggle] → [ShoppingViewModel.onToggleChecked].
+ * Tapping the trash icon calls [onDelete] → begins the two-step delete flow.
+ */
 @Composable
 private fun ShoppingItemRow(
     item: ShoppingItemEntity,
@@ -182,6 +224,7 @@ private fun ShoppingItemRow(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        // Reduce card opacity when the item is checked to visually de-emphasise it
         colors = CardDefaults.cardColors(
             containerColor = if (item.isChecked)
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
@@ -195,11 +238,13 @@ private fun ShoppingItemRow(
                 .padding(start = 4.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Checkbox toggles the isChecked state in the database
             Checkbox(
                 checked = item.isChecked,
                 onCheckedChange = onToggle
             )
             Column(modifier = Modifier.weight(1f)) {
+                // Name text: strikethrough + dimmed when checked
                 Text(
                     text = item.name,
                     style = MaterialTheme.typography.bodyLarge,
@@ -212,6 +257,7 @@ private fun ShoppingItemRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                // Quantity sub-label shown only if the user provided one
                 if (item.quantity.isNotBlank()) {
                     Text(
                         text = item.quantity,
@@ -222,6 +268,7 @@ private fun ShoppingItemRow(
                     )
                 }
             }
+            // Delete icon — starts the two-step delete confirmation flow
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
@@ -233,6 +280,10 @@ private fun ShoppingItemRow(
     }
 }
 
+/**
+ * Placeholder card shown when the shopping list has no items.
+ * Displays a cart icon and a hint prompting the user to add their first item.
+ */
 @Composable
 private fun EmptyShoppingContent() {
     Card(
@@ -272,6 +323,12 @@ private fun EmptyShoppingContent() {
     }
 }
 
+/**
+ * Confirmation dialog shown before permanently removing a shopping item.
+ * Displays the item name so the user knows exactly what will be deleted.
+ * "Remove" triggers [ShoppingViewModel.onDeleteConfirmed]; "Cancel" triggers
+ * [ShoppingViewModel.onDeleteDismissed].
+ */
 @Composable
 private fun DeleteItemDialog(
     itemName: String,

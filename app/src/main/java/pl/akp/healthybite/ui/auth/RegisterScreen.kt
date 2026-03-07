@@ -37,29 +37,53 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pl.akp.healthybite.domain.validation.EmailValidator
 import pl.akp.healthybite.domain.validation.PasswordValidator
 
+/**
+ * Registration screen with email, password, and confirm-password fields.
+ *
+ * Password complexity rules from [PasswordValidator] are shown inline as
+ * the user types. The "Create account" button is only enabled once all
+ * validation passes (valid email, strong password, matching confirmation).
+ */
+// Registration screen composable with email, password, and confirm-password fields.
+// Password complexity rules from PasswordValidator are shown inline as the user types.
+// The "Create account" button is only enabled once all validations pass.
+// On success, navigates to the login screen so the user can sign in with the new account.
 @Composable
 fun RegisterScreen(
     viewModel: RegisterViewModel,
     onRegisterSuccess: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
+    // Converts the ViewModel's StateFlow into Compose State so that any change
+    // to uiState triggers a recomposition of this composable.
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // Watches the registerSuccess flag. When it flips to true (after a successful
+    // registration), this effect fires and calls onRegisterSuccess to navigate away.
     LaunchedEffect(uiState.registerSuccess) {
         if (uiState.registerSuccess) onRegisterSuccess()
     }
 
+    // Client-side email format check — true when the email is non-blank but fails
+    // the EmailValidator regex (e.g. missing "@" or domain part).
     val showEmailFormatError =
         uiState.email.isNotBlank() && !EmailValidator.isValid(uiState.email)
+    // Combines server-side emailError (e.g. "Email already registered") with the
+    // client-side format error. Server-side errors take priority when both exist.
     val emailError =
         uiState.emailError ?: if (showEmailFormatError) "Enter a valid email address" else null
 
+    // Real-time password strength checking using PasswordValidator rules
+    // (minimum length, uppercase, lowercase, digit, special character).
+    // Returns a list of human-readable messages for rules that are NOT yet satisfied.
     val passwordMissing = if (uiState.password.isNotBlank()) {
         PasswordValidator.missingRules(uiState.password).map { it.message }
     } else {
         emptyList()
     }
 
+    // Password confirmation validation — shows "Passwords do not match" once the
+    // user has started typing in the confirm field and the values diverge.
     val confirmError =
         if (uiState.confirmPassword.isNotBlank() && uiState.confirmPassword != uiState.password) {
             "Passwords do not match"
@@ -67,6 +91,11 @@ fun RegisterScreen(
             null
         }
 
+    // The "Create account" button is enabled only when ALL of these conditions pass:
+    // 1. Email is not blank and passes format validation.
+    // 2. Password is not blank and satisfies all PasswordValidator rules.
+    // 3. Confirm password matches the password.
+    // 4. A registration request is not already in progress.
     val isRegisterEnabled = uiState.email.isNotBlank()
             && EmailValidator.isValid(uiState.email)
             && uiState.password.isNotBlank()
@@ -98,6 +127,8 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        // Email input field with both client-side format validation and server-side
+        // duplicate-email error display. Disabled while a request is in flight.
         OutlinedTextField(
             value = uiState.email,
             onValueChange = viewModel::onEmailChanged,
@@ -119,6 +150,9 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Password input field with inline display of unsatisfied password rules.
+        // Each missing rule (e.g. "Must contain a digit") is listed below the field.
+        // Includes a visibility toggle icon to switch between masked and plain text.
         OutlinedTextField(
             value = uiState.password,
             onValueChange = viewModel::onPasswordChanged,
@@ -167,6 +201,9 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Confirm-password field — must match the password above.
+        // Shows "Passwords do not match" when the values diverge.
+        // The IME action is Done — pressing it triggers registration if the button is enabled.
         OutlinedTextField(
             value = uiState.confirmPassword,
             onValueChange = viewModel::onConfirmPasswordChanged,
@@ -212,6 +249,9 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // "Create account" button — disabled until isRegisterEnabled is true.
+        // While a registration request is in flight, the label is replaced with
+        // a spinning progress indicator to give the user visual feedback.
         Button(
             onClick = viewModel::onRegister,
             enabled = isRegisterEnabled,
@@ -233,6 +273,8 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Navigation link back to the login screen for users who already have
+        // an account. Calls onNavigateToLogin to pop back to the Login route.
         TextButton(onClick = onNavigateToLogin) {
             Text("Already have an account? Log in")
         }
