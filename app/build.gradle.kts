@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -99,6 +100,8 @@ dependencies {
 
     // Material Icons Extended (for visibility toggle, etc.)
     implementation("androidx.compose.material:material-icons-extended")
+
+    implementation(platform("com.google.firebase:firebase-bom:34.10.0"))
 
     // Tooling / Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
