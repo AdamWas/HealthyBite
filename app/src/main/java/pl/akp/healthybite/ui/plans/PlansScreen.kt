@@ -40,11 +40,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import pl.akp.healthybite.domain.model.MealType
 
+/**
+ * Plans tab – displays predefined meal plans that the user can apply to today.
+ *
+ * Each plan card shows its name, total kcal, and a breakdown of meal items
+ * with type badges. The "Apply to today" button bulk-inserts the plan's
+ * meals into today's log and shows a snackbar confirmation.
+ */
 @Composable
 fun PlansScreen(viewModel: PlansViewModel) {
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    /*
+     * Two LaunchedEffects watch for success/error messages from the ViewModel.
+     * When a message appears, they display it via snackbar and immediately
+     * clear it so it won't re-trigger on recomposition.
+     */
     LaunchedEffect(state.successMessage) {
         state.successMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -72,6 +84,13 @@ fun PlansScreen(viewModel: PlansViewModel) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
 
+            /*
+             * LazyColumn layout order:
+             *   1. "Plans" header
+             *   2. Plan cards (each with name, kcal, meal items, and "Apply" button)
+             *   3. Empty-state placeholder (if no plans after loading)
+             *   4. Bottom spacer for navigation-bar clearance
+             */
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -92,13 +111,16 @@ fun PlansScreen(viewModel: PlansViewModel) {
                     items(state.plans, key = { it.planId }) { plan ->
                         PlanCard(
                             plan = plan,
+                            // Show spinner on the specific card being applied
                             isApplying = state.applyingPlanId == plan.planId,
+                            // Disable ALL apply buttons while any plan is being applied
                             applyEnabled = state.applyingPlanId == null,
                             onApply = { viewModel.onApplyClicked(plan.planId) }
                         )
                     }
                 }
 
+                // Shown only after loading completes with zero plans
                 if (!state.isLoading && state.plans.isEmpty()) {
                     item(key = "empty") {
                         EmptyPlansContent()
@@ -113,6 +135,18 @@ fun PlansScreen(viewModel: PlansViewModel) {
     }
 }
 
+/**
+ * Card for a single meal plan.
+ *
+ * Layout:
+ *   - Header row: plan name (left) + total kcal badge (right)
+ *   - Divider
+ *   - Meal item rows (meal-type badge + meal name)
+ *   - "Apply to today" button at the bottom
+ *
+ * [isApplying] shows a spinner inside the button for *this* card.
+ * [applyEnabled] is false when *any* plan is being applied, locking all buttons.
+ */
 @Composable
 private fun PlanCard(
     plan: PlanCardModel,
@@ -127,6 +161,7 @@ private fun PlanCard(
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            // Header: plan name on the left, total kcal on the right
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -152,6 +187,7 @@ private fun PlanCard(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Spacer(modifier = Modifier.height(12.dp))
 
+            // List of meals in this plan (e.g. Breakfast → Oatmeal, Lunch → Salad)
             plan.items.forEach { item ->
                 PlanItemRow(item)
                 Spacer(modifier = Modifier.height(6.dp))
@@ -159,6 +195,12 @@ private fun PlanCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            /*
+             * "Apply to today" button.
+             * Disabled while another plan is being applied (applyEnabled == false)
+             * OR while this specific plan is mid-apply (isApplying == true).
+             * Shows a spinner + "Applying…" during the async operation.
+             */
             Button(
                 onClick = onApply,
                 enabled = applyEnabled && !isApplying,
@@ -186,6 +228,7 @@ private fun PlanCard(
     }
 }
 
+/** A single row inside a plan card: meal-type badge on the left, meal name on the right. */
 @Composable
 private fun PlanItemRow(item: PlanItemUi) {
     Row(
@@ -201,6 +244,10 @@ private fun PlanItemRow(item: PlanItemUi) {
     }
 }
 
+/**
+ * Small coloured chip that displays the meal type (Breakfast / Lunch / Dinner / Snack).
+ * Uses [tertiaryContainer] colour to visually distinguish it from surrounding text.
+ */
 @Composable
 private fun MealTypeBadge(type: MealType) {
     val label = when (type) {
@@ -224,6 +271,10 @@ private fun MealTypeBadge(type: MealType) {
     }
 }
 
+/**
+ * Placeholder card shown when there are no meal plans in the database.
+ * Displays a calendar icon and a message indicating no plans are available.
+ */
 @Composable
 private fun EmptyPlansContent() {
     Card(

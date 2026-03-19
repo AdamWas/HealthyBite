@@ -3,8 +3,23 @@ package pl.akp.healthybite.data.db
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 
+/**
+ * Room [RoomDatabase.Callback] that inserts initial seed data via raw SQL
+ * the very first time the database file is created.
+ *
+ * This runs at the SQLite level (before Room DAOs are available), so it
+ * uses raw `INSERT` statements. [DatabaseSeeder] provides a complementary
+ * DAO-based fallback for subsequent launches if the tables are empty.
+ */
 class PrepopulateCallback : RoomDatabase.Callback() {
 
+    /**
+     * Called exactly once – when the SQLite database file is first created on disk.
+     * Subsequent app launches skip this entirely (the file already exists).
+     *
+     * Room DAOs are NOT available inside this callback because the database is
+     * still being initialised, so all inserts use raw SQL via SupportSQLiteDatabase.
+     */
     override fun onCreate(db: SupportSQLiteDatabase) {
         super.onCreate(db)
         insertDemoUser(db)
@@ -14,6 +29,7 @@ class PrepopulateCallback : RoomDatabase.Callback() {
         insertShoppingItems(db)
     }
 
+    /** Inserts one demo user so the app is immediately usable without registration. */
     private fun insertDemoUser(db: SupportSQLiteDatabase) {
         db.execSQL(
             """
@@ -23,6 +39,7 @@ class PrepopulateCallback : RoomDatabase.Callback() {
         )
     }
 
+    /** Inserts 16 meal templates (4 per category) that appear on the Add Meal screen. */
     private fun insertMealTemplates(db: SupportSQLiteDatabase) {
         val meals = listOf(
             // Breakfast
@@ -54,12 +71,14 @@ class PrepopulateCallback : RoomDatabase.Callback() {
         }
     }
 
+    /** Inserts 3 named meal plans shown on the Plans screen. */
     private fun insertPlanTemplates(db: SupportSQLiteDatabase) {
         db.execSQL("INSERT INTO plan_templates (name) VALUES ('Cutting (~1800 kcal)')")
         db.execSQL("INSERT INTO plan_templates (name) VALUES ('High Protein (~2200 kcal)')")
         db.execSQL("INSERT INTO plan_templates (name) VALUES ('Veggie (~1900 kcal)')")
     }
 
+    /** Inserts 12 plan items (4 meals per plan), linking each to its parent plan by ID. */
     private fun insertPlanTemplateItems(db: SupportSQLiteDatabase) {
         val items = listOf(
             // Cutting (planId = 1)
@@ -86,6 +105,7 @@ class PrepopulateCallback : RoomDatabase.Callback() {
         }
     }
 
+    /** Inserts sample shopping list items for the demo user (userId = 1). */
     private fun insertShoppingItems(db: SupportSQLiteDatabase) {
         val items = listOf(
             "Oats 500 g", "Chicken breast 1 kg", "Basmati rice 1 kg",
@@ -99,17 +119,27 @@ class PrepopulateCallback : RoomDatabase.Callback() {
         }
     }
 
+    /** Factory shortcut that wraps raw meal values into a MealRow for destructuring in the loop. */
     private fun mt(name: String, type: String, kcal: Int, p: Int, f: Int, c: Int) =
         MealRow(name, type, kcal, p, f, c)
 
+    /** Factory shortcut that wraps plan-item values into a PlanItemRow for destructuring. */
     private fun pi(planId: Long, mealName: String, mealType: String) =
         PlanItemRow(planId, mealName, mealType)
 
+    /**
+     * Lightweight data class used as a destructuring container for meal template values.
+     * Allows the for-loop to destructure (name, type, kcal, p, f, c) directly.
+     */
     private data class MealRow(
         val name: String, val type: String,
         val kcal: Int, val p: Int, val f: Int, val c: Int
     )
 
+    /**
+     * Lightweight data class used as a destructuring container for plan item values.
+     * Allows the for-loop to destructure (planId, mealName, mealType) directly.
+     */
     private data class PlanItemRow(
         val planId: Long, val mealName: String, val mealType: String
     )

@@ -39,6 +39,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
+/**
+ * Profile screen displaying account info, a daily calorie goal editor, and a logout button.
+ *
+ * Snackbar feedback is shown after saving the goal or on errors.
+ * Logout clears the DataStore session and navigates back to Login.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
@@ -46,16 +52,23 @@ fun ProfileScreen(
     onLogoutSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Manages the Snackbar queue; remembered so it survives recomposition.
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Navigate to Login once the logout flow completes successfully.
     LaunchedEffect(uiState.logoutSuccess) {
         if (uiState.logoutSuccess) onLogoutSuccess()
     }
 
+    // Edge-case guard: if there's no session in the DataStore (e.g. after a destructive DB
+    // migration), automatically redirect to Login instead of showing an empty profile.
     LaunchedEffect(uiState.noSession) {
         if (uiState.noSession) onLogoutSuccess()
     }
 
+    // Show a Snackbar whenever a success or error message is emitted by the ViewModel,
+    // then clear the message so it isn't re-shown on the next recomposition.
     LaunchedEffect(uiState.successMessage, uiState.errorMessage) {
         val msg = uiState.successMessage ?: uiState.errorMessage
         if (msg != null) {
@@ -77,6 +90,8 @@ fun ProfileScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
+        // Full-screen spinner shown while the user profile is being loaded.
+        // The email.isEmpty() guard prevents flashing the spinner during a goal-save reload.
         if (uiState.isLoading && uiState.email.isEmpty()) {
             Column(
                 modifier = Modifier
@@ -115,6 +130,10 @@ fun ProfileScreen(
     }
 }
 
+/**
+ * Displays the user's email address with an email icon.
+ * Read-only — there is no way to change the email from this screen.
+ */
 @Composable
 private fun AccountCard(email: String) {
     Card(
@@ -143,6 +162,13 @@ private fun AccountCard(email: String) {
     }
 }
 
+/**
+ * Editable card for the daily calorie goal.
+ *
+ * Contains a numeric OutlinedTextField (valid range 1000–5000 kcal) and a Save button.
+ * While saving, the button shows a spinner and is disabled. Validation errors appear
+ * as supporting text below the field.
+ */
 @Composable
 private fun GoalsCard(
     caloriesGoal: String,
@@ -204,6 +230,13 @@ private fun GoalsCard(
     }
 }
 
+/**
+ * Card containing the logout button.
+ *
+ * The button is styled with the error color scheme (red) to signal a destructive action.
+ * While the logout coroutine is running, a spinner replaces the button label to prevent
+ * duplicate taps.
+ */
 @Composable
 private fun SessionCard(
     isLoading: Boolean,

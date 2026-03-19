@@ -32,6 +32,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+/**
+ * Water tab – tracks daily water intake with quick-add buttons.
+ *
+ * A hero card shows the current total with an animated progress bar
+ * toward the 2000 ml goal. Three buttons (+250 / +500 / +750 ml) allow
+ * quick logging without typing.
+ */
 @Composable
 fun WaterScreen(viewModel: WaterViewModel) {
     val state by viewModel.uiState.collectAsState()
@@ -41,6 +48,7 @@ fun WaterScreen(viewModel: WaterViewModel) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
+        // Indeterminate progress bar while the initial total is loading
         if (state.isLoading) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
@@ -51,6 +59,7 @@ fun WaterScreen(viewModel: WaterViewModel) {
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
+            // Show today's date beneath the title so the user knows which day they're logging
             if (state.date.isNotEmpty()) {
                 Text(
                     text = state.date,
@@ -61,12 +70,15 @@ fun WaterScreen(viewModel: WaterViewModel) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Hero card showing current total, goal, animated progress bar, and percentage
             TotalCard(state)
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Row of three quick-add buttons (+250, +500, +750 ml)
             AddWaterButtons(onAdd = viewModel::onAdd)
 
+            // Hint text when the user hasn't logged any water yet today
             if (!state.isLoading && state.totalMl == 0) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
@@ -90,8 +102,20 @@ fun WaterScreen(viewModel: WaterViewModel) {
     }
 }
 
+/**
+ * Hero card displaying the user's current hydration status:
+ *   - Water-drop icon
+ *   - Large "X ml" total
+ *   - "of Y ml goal" sub-label
+ *   - Animated progress bar (fills as total approaches goal)
+ *   - Percentage label
+ *
+ * Uses [animateFloatAsState] so the progress bar glides smoothly when
+ * [WaterUiState.totalMl] changes, rather than jumping instantly.
+ */
 @Composable
 private fun TotalCard(state: WaterUiState) {
+    // Smoothly animate the bar whenever the underlying progress fraction changes
     val animatedProgress by animateFloatAsState(
         targetValue = state.progress,
         animationSpec = tween(durationMillis = 400),
@@ -117,18 +141,21 @@ private fun TotalCard(state: WaterUiState) {
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
             Spacer(modifier = Modifier.height(12.dp))
+            // Current total in large bold text
             Text(
                 text = "${state.totalMl} ml",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
+            // Goal label sits directly under the total
             Text(
                 text = "of ${state.goalMl} ml goal",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
             )
             Spacer(modifier = Modifier.height(16.dp))
+            // Rounded progress bar driven by the animated value
             LinearProgressIndicator(
                 progress = { animatedProgress },
                 modifier = Modifier
@@ -139,6 +166,7 @@ private fun TotalCard(state: WaterUiState) {
                 strokeCap = StrokeCap.Round,
             )
             Spacer(modifier = Modifier.height(8.dp))
+            // Numeric percentage below the bar for at-a-glance reading
             Text(
                 text = "${(state.progress * 100).toInt()}%",
                 style = MaterialTheme.typography.labelMedium,
@@ -148,6 +176,11 @@ private fun TotalCard(state: WaterUiState) {
     }
 }
 
+/**
+ * Row of three equally-weighted quick-add buttons (+250 / +500 / +750 ml).
+ * Each button calls [onAdd] with its specific amount, which ultimately
+ * inserts a [WaterEntryEntity] via [WaterViewModel.onAdd].
+ */
 @Composable
 private fun AddWaterButtons(onAdd: (Int) -> Unit) {
     Row(
@@ -160,6 +193,10 @@ private fun AddWaterButtons(onAdd: (Int) -> Unit) {
     }
 }
 
+/**
+ * A single quick-add button. Tapping it calls [onAdd] with [amountMl],
+ * which flows through to [WaterViewModel.onAdd] → DAO insert.
+ */
 @Composable
 private fun WaterButton(
     label: String,

@@ -46,6 +46,13 @@ import androidx.compose.ui.unit.dp
 import pl.akp.healthybite.data.db.entity.MealTemplateEntity
 import pl.akp.healthybite.domain.model.MealType
 
+/**
+ * Add Meal screen – lets the user log a new meal for today.
+ *
+ * The top section selects the [MealType]; a mode toggle switches between
+ * **template** (pick from a list) and **custom** (manual entry with
+ * name, calories, and optional macros). Navigates back on successful save.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddMealScreen(
@@ -54,15 +61,19 @@ fun AddMealScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
+    // When the ViewModel signals a successful save, navigate back to the previous screen.
+    // LaunchedEffect re-runs whenever state.saved changes; once true it fires onBack().
     LaunchedEffect(state.saved) {
         if (state.saved) onBack()
     }
 
+    // Scaffold provides the top app bar (with a back arrow) and inset-aware padding.
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Add meal") },
                 navigationIcon = {
+                    // Back button returns to the previous screen without saving.
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
@@ -75,6 +86,7 @@ fun AddMealScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            // Thin progress bar at the top while a save is in progress.
             if (state.isSaving) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
@@ -98,6 +110,7 @@ fun AddMealScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Swap between the template list or the custom form based on the active mode.
                 when (state.mode) {
                     AddMealMode.TEMPLATE -> TemplateContent(
                         state = state,
@@ -121,6 +134,11 @@ fun AddMealScreen(
     }
 }
 
+/**
+ * Segmented button row for choosing a MealType (Breakfast / Lunch / Dinner / Snack).
+ * Only one segment can be active at a time. Tapping a segment calls [onSelected],
+ * which triggers the ViewModel to reload templates for that type.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MealTypeSelector(
@@ -141,6 +159,11 @@ private fun MealTypeSelector(
     }
 }
 
+/**
+ * A pair of FilterChips that toggle between "From templates" and "Custom" mode.
+ * The selected chip is visually highlighted. Changing the mode clears validation errors
+ * in the ViewModel so the user starts fresh.
+ */
 @Composable
 private fun ModeSelector(
     mode: AddMealMode,
@@ -160,6 +183,13 @@ private fun ModeSelector(
     }
 }
 
+/**
+ * Content shown when the user is in Template mode.
+ *
+ * Displays a loading spinner while templates are fetched, an empty-state message if none
+ * exist for the selected type, or a scrollable list of [TemplateRow] items with radio-button
+ * selection. The Save button at the bottom is enabled via [AddMealUiState.submitEnabled].
+ */
 @Composable
 private fun TemplateContent(
     state: AddMealUiState,
@@ -214,6 +244,7 @@ private fun TemplateContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Save button — enabled only when a template is selected and no save is in progress.
         Button(
             onClick = onSave,
             enabled = state.submitEnabled,
@@ -224,6 +255,13 @@ private fun TemplateContent(
     }
 }
 
+/**
+ * A single row in the template list.
+ *
+ * Shows a radio button, the template name, and a compact macro summary
+ * (kcal · P · F · C). The card background switches to primaryContainer when selected
+ * to give clear visual feedback.
+ */
 @Composable
 private fun TemplateRow(
     template: MealTemplateEntity,
@@ -261,6 +299,17 @@ private fun TemplateRow(
     }
 }
 
+/**
+ * Content shown when the user is in Custom mode.
+ *
+ * Provides a vertically scrollable form with:
+ *   - Meal name (required text field)
+ *   - Calories (required numeric field)
+ *   - Protein, Fat, Carbs (optional numeric fields)
+ *
+ * Each field performs live validation on every keystroke via the ViewModel's
+ * onCustom*Changed() callbacks. The Save button is enabled by [AddMealUiState.submitEnabled].
+ */
 @Composable
 private fun CustomContent(
     state: AddMealUiState,
@@ -337,6 +386,7 @@ private fun CustomContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Save button — enabled when name + calories are filled and no validation errors exist.
         Button(
             onClick = onSave,
             enabled = state.submitEnabled,
@@ -349,6 +399,7 @@ private fun CustomContent(
     }
 }
 
+/** Converts a [MealType] enum constant to a user-friendly display string for buttons and labels. */
 private fun MealType.label(): String = when (this) {
     MealType.BREAKFAST -> "Breakfast"
     MealType.LUNCH -> "Lunch"
