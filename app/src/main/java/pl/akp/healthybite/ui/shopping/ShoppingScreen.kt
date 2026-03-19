@@ -40,7 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import pl.akp.healthybite.data.db.entity.ShoppingItemEntity
+import pl.akp.healthybite.domain.model.ShoppingItem
 
 /**
  * Shopping tab – a checklist-style grocery list.
@@ -218,7 +218,7 @@ private fun AddItemCard(
  */
 @Composable
 private fun ShoppingItemRow(
-    item: ShoppingItemEntity,
+    item: ShoppingItem,
     onToggle: (Boolean) -> Unit,
     onDelete: () -> Unit
 ) {

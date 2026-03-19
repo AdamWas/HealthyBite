@@ -1,21 +1,21 @@
 package pl.akp.healthybite.domain.validation
 
-import android.util.Patterns
+import java.util.regex.Pattern
 
 /**
- * Validates email format using the Android [Patterns.EMAIL_ADDRESS] regex.
+ * Validates email format using a pattern aligned with Android's [android.util.Patterns.EMAIL_ADDRESS].
  *
- * Called in LoginScreen and RegisterScreen for real-time validation as the
- * user types, so the Login / Register button is only enabled when the format
- * is structurally valid (not verified via a server round-trip).
+ * Implemented with [java.util.regex.Pattern] so the same checks run on the JVM in unit tests
+ * (no Android stubs required).
  */
 object EmailValidator {
-    /**
-     * Returns true when [email] is non-blank and matches Android's built-in
-     * EMAIL_ADDRESS pattern, which covers most RFC-compliant addresses.
-     */
+
+    private val EMAIL_ADDRESS: Pattern = Pattern.compile(
+        "[a-zA-Z0-9+._%\\-]{1,256}@[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
+            "(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25})+"
+    )
+
     fun isValid(email: String): Boolean {
-        // Blank check first to skip the heavier regex match on empty input
-        return email.isNotBlank() && Patterns.EMAIL_ADDRESS.matcher(email).matches()
+        return email.isNotBlank() && EMAIL_ADDRESS.matcher(email).matches()
     }
 }

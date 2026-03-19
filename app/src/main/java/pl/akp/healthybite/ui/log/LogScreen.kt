@@ -40,7 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import pl.akp.healthybite.data.db.entity.MealEntryEntity
+import pl.akp.healthybite.domain.model.MealEntry
 import pl.akp.healthybite.domain.model.MealType
 
 /**
@@ -64,7 +64,7 @@ fun LogScreen(
     // 2. A DeleteConfirmDialog appears showing the entry name.
     // 3. On confirm → viewModel.onDeleteEntry() is called, and the state is cleared.
     // 4. On dismiss → the state is simply cleared without any deletion.
-    var entryToDelete by remember { mutableStateOf<MealEntryEntity?>(null) }
+    var entryToDelete by remember { mutableStateOf<MealEntry?>(null) }
 
     entryToDelete?.let { entry ->
         DeleteConfirmDialog(
@@ -236,7 +236,7 @@ private fun MacroChip(label: String, valueG: Int) {
  */
 @Composable
 private fun EntryCard(
-    entry: MealEntryEntity,
+    entry: MealEntry,
     onDeleteClick: () -> Unit
 ) {
     Card(

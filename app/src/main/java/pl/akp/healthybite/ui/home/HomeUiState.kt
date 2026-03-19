@@ -2,7 +2,7 @@ package pl.akp.healthybite.ui.home
 
 /** UI state for the Home tab – aggregated nutrition totals for today. */
 data class HomeUiState(
-    /** Whether entries are still being loaded from Room; drives the LinearProgressIndicator. */
+    /** Whether entries are still being loaded; drives the LinearProgressIndicator. */
     val isLoading: Boolean = true,
     /** Today's date as ISO string (e.g. "2026-03-07"); shown below the "Today" header. */
     val date: String = "",

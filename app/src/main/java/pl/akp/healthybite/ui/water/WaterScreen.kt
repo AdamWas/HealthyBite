@@ -179,7 +179,7 @@ private fun TotalCard(state: WaterUiState) {
 /**
  * Row of three equally-weighted quick-add buttons (+250 / +500 / +750 ml).
  * Each button calls [onAdd] with its specific amount, which ultimately
- * inserts a [WaterEntryEntity] via [WaterViewModel.onAdd].
+ * inserts a water entry via [WaterViewModel.onAdd].
  */
 @Composable
 private fun AddWaterButtons(onAdd: (Int) -> Unit) {
