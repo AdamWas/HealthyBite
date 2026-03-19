@@ -43,7 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import pl.akp.healthybite.data.db.entity.MealTemplateEntity
+import pl.akp.healthybite.domain.model.MealTemplate
 import pl.akp.healthybite.domain.model.MealType
 
 /**
@@ -193,7 +193,7 @@ private fun ModeSelector(
 @Composable
 private fun TemplateContent(
     state: AddMealUiState,
-    onTemplateSelected: (Long) -> Unit,
+    onTemplateSelected: (String) -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -264,7 +264,7 @@ private fun TemplateContent(
  */
 @Composable
 private fun TemplateRow(
-    template: MealTemplateEntity,
+    template: MealTemplate,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {

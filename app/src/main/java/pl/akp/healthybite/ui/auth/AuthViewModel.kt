@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import pl.akp.healthybite.data.firebase.FirestoreDebug
 import pl.akp.healthybite.domain.repository.AuthRepository
 
 /**
@@ -62,7 +63,10 @@ class AuthViewModel(
                 }
                 .onFailure { e ->
                     _uiState.update {
-                        it.copy(isLoading = false, credentialError = e.message ?: "Login failed")
+                        it.copy(
+                            isLoading = false,
+                            credentialError = FirestoreDebug.userMessage(e)
+                        )
                     }
                 }
         }

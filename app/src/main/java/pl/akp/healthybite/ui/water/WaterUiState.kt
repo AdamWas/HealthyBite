@@ -7,7 +7,7 @@ package pl.akp.healthybite.ui.water
  * The default [goalMl] of 2000 ml is a standard daily hydration target.
  */
 data class WaterUiState(
-    /** True while the initial water total is being loaded from Room. */
+    /** True while the initial water total is being loaded. */
     val isLoading: Boolean = true,
     /** Today's date as an ISO string (e.g. "2026-03-07"), shown beneath the header. */
     val date: String = "",

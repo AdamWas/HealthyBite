@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import pl.akp.healthybite.data.firebase.FirestoreDebug
 import pl.akp.healthybite.domain.repository.AuthRepository
 import pl.akp.healthybite.domain.repository.EmailAlreadyExistsException
 
@@ -73,7 +74,7 @@ class RegisterViewModel(
                 .onFailure { e ->
                     val emailError = when (e) {
                         is EmailAlreadyExistsException -> e.message
-                        else -> "Registration failed"
+                        else -> FirestoreDebug.userMessage(e)
                     }
                     _uiState.update { it.copy(isLoading = false, emailError = emailError) }
                 }

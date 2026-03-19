@@ -53,8 +53,9 @@ class PasswordValidatorTest {
     }
 
     @Test
-    fun `demo password zaq1 at WSX is too short for new registrations`() {
-        val missing = PasswordValidator.missingRules("zaq1@WSX")
+    fun `password with fewer than 8 chars fails MIN_LENGTH`() {
+        // Full demo password is "zaq1@WSX" (8 chars) — this 7-char variant only fails length.
+        val missing = PasswordValidator.missingRules("zaq1@WS")
         assertTrue(missing.contains(PasswordRule.MIN_LENGTH))
         assertEquals(listOf(PasswordRule.MIN_LENGTH), missing)
     }
