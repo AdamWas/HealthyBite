@@ -190,12 +190,3 @@ Dla ekranu `WaterScreen`:
   * większym ekranie/tablecie (~600dp+)
 
 Zapewnia poprawne wyświetlanie dla co najmniej dwóch rozmiarów urządzeń.
-
-## 12. Jakość kodu i konwencje
-
-* stosowanie standardów Kotlin (camelCase, PascalCase)
-* czytelny podział na pakiety
-* separacja warstw
-* użycie `StateFlow` i `Flow`
-* modularna struktura ViewModel → Repository
-* spójne nazewnictwo klas i plików
